@@ -96,4 +96,6 @@ RUN git clone --depth 1 https://github.com/BioMedIA/MIRTK.git && \
     ldconfig && \
     cd /tmp && rm -rf /tmp/MIRTK /tmp/mirtk-build
 
+# Avoid hardcoding python path
+RUN echo '#! /usr/bin/env python' 1<> /opt/mirtk/bin/mirtk
 ENV PATH="/opt/mirtk/bin:$PATH"
