@@ -28,7 +28,7 @@ RUN git clone --depth 1 --branch v5.3.0 https://github.com/InsightSoftwareConsor
     cmake \
         -DBUILD_EXAMPLES=OFF \
         -DBUILD_TESTING=OFF \
-        -DCMAKE_INSTALL_PREFIX=/opt/ITK \
+        -DCMAKE_INSTALL_PREFIX=/opt/itk \
     /tmp/ITK && \
     make -j $(nproc) install && \
     cd /tmp && rm -rf /tmp/ITK /tmp/itk-build
@@ -41,14 +41,11 @@ RUN mkdir /tmp/vtk-build && cd /tmp/vtk-build && \
     cmake \
         -DBUILD_EXAMPLES=OFF \
         -DBUILD_TESTING=OFF \
-        -DCMAKE_INSTALL_PREFIX=/opt/VTK \
+        -DCMAKE_INSTALL_PREFIX=/opt/vtk \
     /tmp/VTK && \
     make -j $(nproc) install && \
     cd /tmp && rm -rf /tmp/VTK /tmp/vtk-build
 
-# Ensure MIRTK dependencies can be found
-ENV ITK_DIR=/opt/itk \
-    DEPENDS_VTK_DIR=/opt/vtk
 
 # MIRTK (built with FLANN=OFF)
 # library: libflann-dev (1.9.3-2build2)
@@ -60,6 +57,7 @@ ENV ITK_DIR=/opt/itk \
 RUN git clone --depth 1 https://github.com/BioMedIA/MIRTK.git && \
     cd MIRTK && git submodule update --init -- Packages && \
     mkdir /tmp/mirtk-build && cd /tmp/mirtk-build && \
+    ITK_DIR=/opt/itk && VTK_DIR=/opt/vtk && \
     cmake  \
         -D CMAKE_INSTALL_PREFIX=/opt/mirtk \
         -D CMAKE_BUILD_TYPE=Release \
@@ -97,5 +95,6 @@ RUN git clone --depth 1 https://github.com/BioMedIA/MIRTK.git && \
     cd /tmp && rm -rf /tmp/MIRTK /tmp/mirtk-build
 
 # Avoid hardcoding python path
-RUN echo '#! /usr/bin/env python' 1<> /opt/mirtk/bin/mirtk
-ENV PATH="/opt/mirtk/bin:$PATH"
+RUN sed -i '1 c#! /usr/bin/env python' /opt/mirtk/bin/mirtk
+ENV PATH="/opt/mirtk/bin:$PATH" \
+    LD_LIBRARY_PATH="/usr/lib/x86_64-linux-gnu:/opt/vtk/lib:/opt/itk/lib:${LD_LIBRARY_PATH}"
