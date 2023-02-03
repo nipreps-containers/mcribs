@@ -2,7 +2,7 @@
 Medical Image Registration ToolKit (MIRTK)
 
 
-This builds MIRTK and its dependencies (ITK, VTK) from source.
+This builds the MCRIBS version of MIRTK (latest commit: https://github.com/DevelopmentalImagingMCRI/MCRIBS/commit/bb57350a88c35487ae1ad2d33975ec83eaa15a45) and its dependencies (ITK, VTK) from source.
 Additionally, a modified version of VTK 9.2.2 is used, following https://github.com/DevelopmentalImagingMCRI/MCRIBS/commit/e0daec6d0798659c54eeea6c2bb2e440ca3de089
 
 
@@ -18,3 +18,4 @@ To use `mirtk` tools in another Dockerfile, you will need to:
     - libpng-dev
     - libsuitesparse-dev
     - libtbb-dev
+
