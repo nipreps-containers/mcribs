@@ -59,7 +59,7 @@ RUN git clone --depth 1 https://github.com/DevelopmentalImagingMCRI/MCRIBS.git &
     cd MCRIBS && git checkout bb57350a88c35487ae1ad2d33975ec83eaa15a45 && \
     mv MIRTK/MIRTK /tmp/MIRTK && \
     patch /tmp/MIRTK/Modules/Common/src/Parallel.cc /tmp/patches/Parallel.patch && \
-    patch MIRTK/CMake/Modules/FindTBB.cmake /tmp/patches/FindTBB.patch && \
+    patch /tmp/MIRTK/CMake/Modules/FindTBB.cmake /tmp/patches/FindTBB.patch && \
     mkdir /tmp/mirtk-build && cd /tmp/mirtk-build && \
     ITK_DIR=/opt/itk && VTK_DIR=/opt/vtk && \
     cmake  \
@@ -96,7 +96,7 @@ RUN git clone --depth 1 https://github.com/DevelopmentalImagingMCRI/MCRIBS.git &
     /tmp/MIRTK && \
     make -j $(nproc) install && \
     ldconfig && \
-    cd /tmp && rm -rf /tmp/MIRTK /tmp/mirtk-build
+    cd /tmp && rm -rf /tmp/*
 
 # Avoid hardcoding python path
 RUN sed -i '1 c#! /usr/bin/env python' /opt/mirtk/bin/mirtk
