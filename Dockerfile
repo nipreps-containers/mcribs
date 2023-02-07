@@ -98,12 +98,13 @@ RUN git clone --depth 1 https://github.com/DevelopmentalImagingMCRI/MCRIBS.git &
     cd /tmp && rm -rf /tmp/*
 
 # Avoid hardcoding Python paths
-RUN sed -i '1 c#! /usr/bin/env python' /opt/mirtk/bin/mirtk && \
+RUN apt-get update && apt-get install -y --no-install-recommends file && \
+    sed -i '1 c#! /usr/bin/env python' /opt/mirtk/bin/mirtk && \
     for TOOL in $(find /opt/mirtk/lib/tools/ -exec file {} \; | grep text | cut -d: -f1); do \
         echo $TOOL \
-        if [[ $(head -n1 $tool) == *"python" ]]; then \
+        if [[ $(head -n1 $TOOL) == *"python" ]] then \
             sed -i '1 c#! /usr/bin/env python' $TOOL \
-        fi \
+        fi; \
     done
 
 ENV PATH="/opt/mirtk/bin:$PATH" \
