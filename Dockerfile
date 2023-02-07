@@ -54,8 +54,11 @@ RUN mkdir /tmp/vtk-build && cd /tmp/vtk-build && \
 # /usr/bin/ld: ../../lib/libMIRTKPointSet.so.0.0.0: undefined reference to `LZ4_decompress_safe'
 # /usr/bin/ld: ../../lib/libMIRTKPointSet.so.0.0.0: undefined reference to `LZ4_decompress_safe_continue'
 # /usr/bin/ld: ../../lib/libMIRTKPointSet.so.0.0.0: undefined reference to `LZ4_compress_HC_continue'
-RUN git clone --depth 1 https://github.com/BioMedIA/MIRTK.git && \
-    cd MIRTK && git submodule update --init -- Packages && \
+COPY patch/FindTBB.patch patch/Parallel.patch /tmp/patches/
+RUN git clone --depth 1 https://github.com/DevelopmentalImagingMCRI/MCRIBS.git && \
+    cd MCRIBS && mv MIRTK/MIRTK /tmp/MIRTK && \
+    patch /tmp/MIRTK/Modules/Common/src/Parallel.cc /tmp/patches/Parallel.patch && \
+    patch /tmp/MIRTK/CMake/Modules/FindTBB.cmake /tmp/patches/FindTBB.patch && \
     mkdir /tmp/mirtk-build && cd /tmp/mirtk-build && \
     ITK_DIR=/opt/itk && VTK_DIR=/opt/vtk && \
     cmake  \
@@ -92,9 +95,12 @@ RUN git clone --depth 1 https://github.com/BioMedIA/MIRTK.git && \
     /tmp/MIRTK && \
     make -j $(nproc) install && \
     ldconfig && \
-    cd /tmp && rm -rf /tmp/MIRTK /tmp/mirtk-build
+    cd /tmp && rm -rf /tmp/*
 
-# Avoid hardcoding python path
-RUN sed -i '1 c#! /usr/bin/env python' /opt/mirtk/bin/mirtk
+# Avoid hardcoding Python paths
+COPY scripts/fixpy.sh .
+RUN apt-get update && apt-get install -y --no-install-recommends file && \
+    bash fixpy.sh /opt/mirtk
+
 ENV PATH="/opt/mirtk/bin:$PATH" \
     LD_LIBRARY_PATH="/usr/lib/x86_64-linux-gnu:/opt/vtk/lib:/opt/itk/lib:${LD_LIBRARY_PATH}"

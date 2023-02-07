@@ -1,0 +1,15 @@
+--- Modules/Common/src/Parallel.cc	2023-02-03 13:55:17
++++ p/Modules/Common/src/Parallel.cc	2023-02-03 13:54:48
+@@ -18,7 +18,11 @@
+  */
+ 
+ #ifdef HAVE_TBB
+-#  include <tbb/tbb_stddef.h>
++#  if __has_include("tbb/tbb_stddef.h")
++#    include <tbb/tbb_stddef.h>
++#  else
++#    include <tbb/version.h>
++#  endif
+ #endif
+ 
+ #include "mirtk/Parallel.h"
