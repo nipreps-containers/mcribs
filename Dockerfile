@@ -98,14 +98,9 @@ RUN git clone --depth 1 https://github.com/DevelopmentalImagingMCRI/MCRIBS.git &
     cd /tmp && rm -rf /tmp/*
 
 # Avoid hardcoding Python paths
+COPY scripts/fixpy.sh .
 RUN apt-get update && apt-get install -y --no-install-recommends file && \
-    sed -i '1 c#! /usr/bin/env python' /opt/mirtk/bin/mirtk && \
-    for TOOL in $(find /opt/mirtk/lib/tools/ -exec file {} \; | grep text | cut -d: -f1); do \
-        echo $TOOL \
-        if [[ $(head -n1 $TOOL) == *"python" ]] then \
-            sed -i '1 c#! /usr/bin/env python' $TOOL \
-        fi; \
-    done
+    bash fixpy.sh /opt/mirtk
 
 ENV PATH="/opt/mirtk/bin:$PATH" \
     LD_LIBRARY_PATH="/usr/lib/x86_64-linux-gnu:/opt/vtk/lib:/opt/itk/lib:${LD_LIBRARY_PATH}"
