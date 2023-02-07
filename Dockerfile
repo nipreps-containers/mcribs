@@ -56,8 +56,7 @@ RUN mkdir /tmp/vtk-build && cd /tmp/vtk-build && \
 # /usr/bin/ld: ../../lib/libMIRTKPointSet.so.0.0.0: undefined reference to `LZ4_compress_HC_continue'
 COPY patch/FindTBB.patch patch/Parallel.patch /tmp/patches/
 RUN git clone --depth 1 https://github.com/DevelopmentalImagingMCRI/MCRIBS.git && \
-    cd MCRIBS && git checkout bb57350a88c35487ae1ad2d33975ec83eaa15a45 && \
-    mv MIRTK/MIRTK /tmp/MIRTK && \
+    cd MCRIBS && mv MIRTK/MIRTK /tmp/MIRTK && \
     patch /tmp/MIRTK/Modules/Common/src/Parallel.cc /tmp/patches/Parallel.patch && \
     patch /tmp/MIRTK/CMake/Modules/FindTBB.cmake /tmp/patches/FindTBB.patch && \
     mkdir /tmp/mirtk-build && cd /tmp/mirtk-build && \
