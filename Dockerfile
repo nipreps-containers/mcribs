@@ -98,7 +98,14 @@ RUN git clone --depth 1 https://github.com/DevelopmentalImagingMCRI/MCRIBS.git &
     ldconfig && \
     cd /tmp && rm -rf /tmp/*
 
-# Avoid hardcoding python path
-RUN sed -i '1 c#! /usr/bin/env python' /opt/mirtk/bin/mirtk
+# Avoid hardcoding Python paths
+RUN sed -i '1 c#! /usr/bin/env python' /opt/mirtk/bin/mirtk && \
+    for TOOL in $(find /opt/mirtk/lib/tools/ -exec file {} \; | grep text | cut -d: -f1); do \
+        echo $TOOL \
+        if [[ $(head -n1 $tool) == *"python" ]]; then \
+            sed -i '1 c#! /usr/bin/env python' $TOOL \
+        fi \
+    done
+
 ENV PATH="/opt/mirtk/bin:$PATH" \
     LD_LIBRARY_PATH="/usr/lib/x86_64-linux-gnu:/opt/vtk/lib:/opt/itk/lib:${LD_LIBRARY_PATH}"
