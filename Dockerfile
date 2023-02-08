@@ -56,7 +56,9 @@ RUN mkdir /tmp/vtk-build && cd /tmp/vtk-build && \
 # /usr/bin/ld: ../../lib/libMIRTKPointSet.so.0.0.0: undefined reference to `LZ4_compress_HC_continue'
 COPY patch/FindTBB.patch patch/Parallel.patch /tmp/patches/
 RUN git clone --depth 1 https://github.com/DevelopmentalImagingMCRI/MCRIBS.git && \
-    cd MCRIBS && mv MIRTK/MIRTK /tmp/MIRTK && \
+    cd MCRIBS && mkdir /opt/mcribs && \
+    mv lib/python/ bin/ /opt/mcribs/ && \
+    mv MIRTK/MIRTK/ /tmp/MIRTK/ && \
     patch /tmp/MIRTK/Modules/Common/src/Parallel.cc /tmp/patches/Parallel.patch && \
     patch /tmp/MIRTK/CMake/Modules/FindTBB.cmake /tmp/patches/FindTBB.patch && \
     mkdir /tmp/mirtk-build && cd /tmp/mirtk-build && \
@@ -100,7 +102,7 @@ RUN git clone --depth 1 https://github.com/DevelopmentalImagingMCRI/MCRIBS.git &
 # Avoid hardcoding Python paths
 COPY scripts/fixpy.sh .
 RUN apt-get update && apt-get install -y --no-install-recommends file && \
-    bash fixpy.sh /opt/mirtk
+    bash fixpy.sh /opt/mirtk/lib/tools/ /opt/mirtk/bin/ /opt/mcribs/python/ /opt/mcribs/bin/
 
 ENV PATH="/opt/mirtk/bin:$PATH" \
     LD_LIBRARY_PATH="/usr/lib/x86_64-linux-gnu:/opt/vtk/lib:/opt/itk/lib:${LD_LIBRARY_PATH}"
