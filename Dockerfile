@@ -100,4 +100,4 @@ RUN apt-get update && apt-get install -y --no-install-recommends file && \
     bash fixpy.sh /opt/mirtk/lib/tools/ /opt/mirtk/bin/
 
 ENV PATH="/opt/mirtk/bin:$PATH" \
-    LD_LIBRARY_PATH="/usr/lib/x86_64-linux-gnu:/opt/vtk/lib:/opt/itk/lib:${LD_LIBRARY_PATH}"
+    LD_LIBRARY_PATH="/opt/mirtk/lib:/opt/vtk/lib:/opt/itk/lib:/usr/lib/x86_64-linux-gnu:${LD_LIBRARY_PATH}"
