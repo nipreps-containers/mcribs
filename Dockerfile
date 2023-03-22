@@ -1,4 +1,4 @@
-## Build docker image for running MRCIBS
+# Build docker image for running MCRIBS
 
 # Legacy
 FROM ubuntu:18.04
