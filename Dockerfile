@@ -40,5 +40,8 @@ RUN git clone https://github.com/AidanWUSTL/MCRIBS_for_MAKEGI.git /opt/MCRIBS \
 COPY scripts/fixpy.sh env/setupMCRIBS.sh /opt/
 RUN bash fixpy.sh /opt/MCRIBS/ > fixpy.log
 
+WORKDIR /usr/lib/x86_64-linux-gnu
+RUN mv libtbb.so.2 libtbbmalloc.so.2 libtbbmalloc_proxy.so.2 /opt/MCRIBS/lib
+
 WORKDIR /work
 ENTRYPOINT ["/opt/setupMCRIBS.sh"]
