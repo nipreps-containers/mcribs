@@ -1,106 +1,47 @@
-FROM ubuntu:jammy
+# Build docker image for running MCRIBS
 
+# Legacy
+FROM ubuntu:18.04
+ARG DEBIAN_FRONTEND=noninteractive
+
+# update apt
 RUN apt-get update && apt-get install -y --no-install-recommends \
-                                        build-essential \
-                                        ca-certificates \
-                                        cmake \
-                                        gcc \
-                                        git \
-                                        make \
-                                        python3 \
-                                        wget \
-                                        # vtk
-                                        freeglut3-dev \
-                                        # mirtk
-                                        libarpack2-dev \
-                                        libcgal-dev \
-                                        libeigen3-dev \
-                                        libpng-dev \
-                                        libsuitesparse-dev \
-                                        libtbb-dev && \
-    ln -s /usr/bin/python3 /usr/bin/python && \
-    rm -rf /var/lib/apt/lists/*
+        apt-utils \
+        build-essential \
+        ca-certificates \
+        g++ \
+        gcc \
+        cmake \
+        curl \
+        file \
+        git \
+        python3-dev \
+        libboost-dev \
+        libeigen3-dev \
+        libflann-dev \
+        libgl1-mesa-dev \
+        libglu1-mesa-dev \
+        libssl-dev \
+        libtbb-dev \
+        libxt-dev \
+        zlib1g-dev \
+    && ln -s /usr/bin/python3 /usr/bin/python \
+    && rm -rf /var/lib/apt/lists/*
 
-# ITK
-WORKDIR /tmp
-RUN git clone --depth 1 --branch v5.3.0 https://github.com/InsightSoftwareConsortium/ITK.git && \
-    mkdir /tmp/itk-build && cd /tmp/itk-build && \
-    cmake \
-        -DBUILD_EXAMPLES=OFF \
-        -DBUILD_TESTING=OFF \
-        -DCMAKE_INSTALL_PREFIX=/opt/itk \
-    /tmp/ITK && \
-    make -j $(nproc) install && \
-    cd /tmp && rm -rf /tmp/ITK /tmp/itk-build
+WORKDIR /opt
+# Build MCRIBS + dependencies through their build script
+# Installed dependencies: ITK, VTK, MIRTK
+RUN git clone --branch nib-comp-v1.1 https://github.com/AidanWUSTL/MCRIBS_for_MAKEGI.git /opt/MCRIBS \
+    && cd MCRIBS \
+    && bash build.sh \
+    # clean up and reduce size
+    && rm -rf ITK/ITK/ ITK/ITK-build/ VTK/VTK/ VTK/VTK-build/ MIRTK/MIRTK/ MIRTK/MIRTK-build/
 
-# VTK
-RUN git clone --depth 1 --branch v9.2.2 https://github.com/Kitware/VTK.git
-# Parallelized vtkPolyDataToImageStencil speeds up WM surface step.
-COPY patch/vtkPolyDataToImageStencil.cxx patch/vtkPolyDataToImageStencil.h VTK/Imaging/Stencil/
-RUN mkdir /tmp/vtk-build && cd /tmp/vtk-build && \
-    cmake \
-        -DBUILD_EXAMPLES=OFF \
-        -DBUILD_TESTING=OFF \
-        -DCMAKE_INSTALL_PREFIX=/opt/vtk \
-    /tmp/VTK && \
-    make -j $(nproc) install && \
-    cd /tmp && rm -rf /tmp/VTK /tmp/vtk-build
+COPY scripts/fixpy.sh env/setupMCRIBS.sh /opt/
+RUN bash fixpy.sh /opt/MCRIBS/ > fixpy.log
 
+WORKDIR /usr/lib/x86_64-linux-gnu
+RUN cp libtbb.so.2 libtbbmalloc.so.2 libtbbmalloc_proxy.so.2 /opt/MCRIBS/lib
 
-# MIRTK (built with FLANN=OFF)
-# library: libflann-dev (1.9.3-2build2)
-# /usr/bin/ld: ../../lib/libMIRTKPointSet.so.0.0.0: undefined reference to `LZ4_resetStreamHC'
-# /usr/bin/ld: ../../lib/libMIRTKPointSet.so.0.0.0: undefined reference to `LZ4_setStreamDecode'
-# /usr/bin/ld: ../../lib/libMIRTKPointSet.so.0.0.0: undefined reference to `LZ4_decompress_safe'
-# /usr/bin/ld: ../../lib/libMIRTKPointSet.so.0.0.0: undefined reference to `LZ4_decompress_safe_continue'
-# /usr/bin/ld: ../../lib/libMIRTKPointSet.so.0.0.0: undefined reference to `LZ4_compress_HC_continue'
-COPY patch/FindTBB.patch patch/Parallel.patch /tmp/patches/
-RUN git clone --depth 1 https://github.com/DevelopmentalImagingMCRI/MCRIBS.git && \
-    cd MCRIBS && mv MIRTK/MIRTK /tmp/MIRTK && \
-    patch /tmp/MIRTK/Modules/Common/src/Parallel.cc /tmp/patches/Parallel.patch && \
-    patch /tmp/MIRTK/CMake/Modules/FindTBB.cmake /tmp/patches/FindTBB.patch && \
-    mkdir /tmp/mirtk-build && cd /tmp/mirtk-build && \
-    ITK_DIR=/opt/itk && VTK_DIR=/opt/vtk && \
-    cmake  \
-        -D CMAKE_INSTALL_PREFIX=/opt/mirtk \
-        -D CMAKE_BUILD_TYPE=Release \
-        -D BUILD_SHARED_LIBS=ON \
-        -D BUILD_APPLICATIONS=ON \
-        -D BUILD_TESTING=OFF \
-        -D BUILD_DOCUMENTATION=OFF \
-        -D BUILD_CHANGELOG=OFF \
-        -D MODULE_Common=ON \
-        -D MODULE_Numerics=ON \
-        -D MODULE_Image=ON \
-        -D MODULE_IO=ON \
-        -D MODULE_PointSet=ON \
-        -D MODULE_Transformation=ON \
-        -D MODULE_Registration=ON \
-        -D MODULE_Deformable=ON \
-        -D MODULE_DrawEM=ON \
-        -D MODULE_Mapping=ON \
-        -D MODULE_Scripting=ON \
-        -D MODULE_Viewer=OFF \
-        -D WITH_ARPACK=ON \
-        -D WITH_FLANN=OFF \
-        -D WITH_MATLAB=OFF \
-        -D WITH_NiftiCLib=ON \
-        -D WITH_PNG=ON \
-        -D WITH_PROFILING=ON \
-        -D WITH_TBB=ON \
-        -D WITH_UMFPACK=ON \
-        -D WITH_ITK=ON \
-        -D WITH_VTK=ON \
-        -D WITH_ZLIB=ON \
-    /tmp/MIRTK && \
-    make -j $(nproc) install && \
-    ldconfig && \
-    cd /tmp && rm -rf /tmp/*
-
-# Avoid hardcoding Python paths
-COPY scripts/fixpy.sh .
-RUN apt-get update && apt-get install -y --no-install-recommends file && \
-    bash fixpy.sh /opt/mirtk
-
-ENV PATH="/opt/mirtk/bin:$PATH" \
-    LD_LIBRARY_PATH="/usr/lib/x86_64-linux-gnu:/opt/vtk/lib:/opt/itk/lib:${LD_LIBRARY_PATH}"
+WORKDIR /work
+ENTRYPOINT ["/opt/setupMCRIBS.sh"]
